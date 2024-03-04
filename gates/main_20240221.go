@@ -1,4 +1,4 @@
-package main
+package gates
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 
 var rate float64 = 0.1
 var eps float64 = 0.1
-var numberOfLoops int = 100000
+var numberOfLoops int = 1000000
 
 type simpleModel struct {
 	weight, weight2, bias [3]float64
