@@ -1,4 +1,4 @@
-package gates
+package main
 
 import (
 	"fmt"
