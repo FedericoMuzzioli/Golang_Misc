@@ -5,6 +5,8 @@ import (
 	"math"
 	"math/rand"
 	"time"
+
+	matrix "./libraries/Matrix"
 	//"slices"
 )
 
@@ -16,35 +18,35 @@ type simpleModel struct {
 	weight, weight2, bias [3]float64
 }
 
-var training_XOR = [][3]float64{
+var training_XOR = [][]float64{
 	{0, 0, 0},
 	{1, 0, 1},
 	{0, 1, 1},
 	{1, 1, 0},
 }
 
-var training_NAND = [][3]float64{
+var training_NAND = [][]float64{
 	{0, 0, 1},
 	{1, 0, 1},
 	{0, 1, 1},
 	{1, 1, 0},
 }
 
-var training_OR = [][3]float64{
+var training_OR = [][]float64{
 	{0, 0, 0},
 	{1, 0, 1},
 	{0, 1, 1},
 	{1, 1, 1},
 }
 
-var training_AND = [][3]float64{
+var training_AND = [][]float64{
 	{0, 0, 0},
 	{1, 0, 0},
 	{0, 1, 0},
 	{1, 1, 1},
 }
 
-func simple_cost(parTrainingset *[][3]float64, weight float64, bias float64) float64 {
+func simple_cost(parTrainingset *[][]float64, weight float64, bias float64) float64 {
 	var result float64 = 0
 	var x1, y, d float64
 	for _, dummy := range *parTrainingset {
@@ -56,7 +58,7 @@ func simple_cost(parTrainingset *[][3]float64, weight float64, bias float64) flo
 	return result / float64(len(*parTrainingset))
 }
 
-func simple_twoimput_cost(parTrainingset *[][3]float64, weight1 float64, weight2 float64, bias float64) float64 {
+func simple_twoimput_cost(parTrainingset *[][]float64, weight1 float64, weight2 float64, bias float64) float64 {
 	var result float64
 	var x1, x2, y, d float64
 	for _, dummy := range *parTrainingset {
@@ -69,7 +71,7 @@ func simple_twoimput_cost(parTrainingset *[][3]float64, weight1 float64, weight2
 	return (result / float64(len(*parTrainingset)))
 }
 
-func simple_cost_Model(simpleModel *simpleModel, parTrainingset *[][3]float64) float64 {
+func simple_cost_Model(simpleModel *simpleModel, parTrainingset *[][]float64) float64 {
 	var result float64
 	var x1, x2, y, d float64
 	for _, dummy := range *parTrainingset {
@@ -116,12 +118,27 @@ func finite_diff(parModel *simpleModel) *simpleModel {
 	return newModel
 }
 
+/*
 func train(parTrainingset *[][3]float64, weight1 *float64, weight2 *float64, bias *float64) {
 	for i := 0; i < numberOfLoops; i++ {
 		dummy := simple_twoimput_cost(parTrainingset, *weight1, *weight2, *bias)
 		dW := (simple_twoimput_cost(parTrainingset, *weight1+eps, *weight2, *bias) - dummy) / eps
 		dw2 := (simple_twoimput_cost(parTrainingset, *weight1, *weight2+eps, *bias) - dummy) / eps
 		dB := (simple_twoimput_cost(parTrainingset, *weight1, *weight2, *bias+eps) - dummy) / eps
+
+		*weight1 -= dW * rate
+		*weight2 -= dw2 * rate
+		*bias -= dB * rate
+	}
+
+}*/
+
+func trainMat(parTrainingset matrix.SimpleMatrix, weight1 *float64, weight2 *float64, bias *float64) {
+	for i := 0; i < numberOfLoops; i++ {
+		dummy := simple_twoimput_cost(parTrainingset.Values, *weight1, *weight2, *bias)
+		dW := (simple_twoimput_cost(parTrainingset.Values, *weight1+eps, *weight2, *bias) - dummy) / eps
+		dw2 := (simple_twoimput_cost(parTrainingset.Values, *weight1, *weight2+eps, *bias) - dummy) / eps
+		dB := (simple_twoimput_cost(parTrainingset.Values, *weight1, *weight2, *bias+eps) - dummy) / eps
 
 		*weight1 -= dW * rate
 		*weight2 -= dw2 * rate
@@ -164,39 +181,48 @@ func main() {
 	s := "----------------------------------------\n"
 	ss := "%d | %d ---> %g\n"
 
-	modelPrt := newRandModel()
+	modelPrt := matrix.NewRandMatrix(3, 3)
 
 	//var currOperation *[][3]float64
 	//currOperation = &training_NAND
+	/*
+		train(&training_AND, &modelPrt.weight[0], &modelPrt.weight2[0], &modelPrt.bias[0])
+		train(&training_NAND, &modelPrt.weight[1], &modelPrt.weight2[1], &modelPrt.bias[1])
+		train(&training_OR, &modelPrt.weight[2], &modelPrt.weight2[2], &modelPrt.bias[2])
+	*/
 
-	train(&training_AND, &modelPrt.weight[0], &modelPrt.weight2[0], &modelPrt.bias[0])
-	train(&training_NAND, &modelPrt.weight[1], &modelPrt.weight2[1], &modelPrt.bias[1])
-	train(&training_OR, &modelPrt.weight[2], &modelPrt.weight2[2], &modelPrt.bias[2])
+	orMatrix := matrix.NewMatrix(training_OR)
+	andMatrix := matrix.NewMatrix(training_AND)
+	nandMatrix := matrix.NewMatrix(training_NAND)
+
+	trainMat(*andMatrix, &(*modelPrt.Values)[0][0], &(*modelPrt.Values)[1][0], &(*modelPrt.Values)[2][0])
+	trainMat(*nandMatrix, &(*modelPrt.Values)[0][1], &(*modelPrt.Values)[1][1], &(*modelPrt.Values)[2][1])
+	trainMat(*orMatrix, &(*modelPrt.Values)[0][2], &(*modelPrt.Values)[1][2], &(*modelPrt.Values)[2][2])
 
 	for h := 0; h < 2; h++ {
 		for t := 0; t < 2; t++ {
-			fmt.Printf(ss, h, t, sigmoid(float64(t)*(modelPrt.weight[0])+(modelPrt.weight2[0])*float64(h)+modelPrt.bias[0]))
+			fmt.Printf(ss, h, t, sigmoid(float64(t)*((*modelPrt.Values)[0][0])+((*modelPrt.Values)[1][0])*float64(h)+(*modelPrt.Values)[2][0]))
 		}
 	}
 	fmt.Print(s)
 	for h := 0; h < 2; h++ {
 		for t := 0; t < 2; t++ {
-			fmt.Printf(ss, h, t, sigmoid(float64(t)*(modelPrt.weight[1])+(modelPrt.weight2[1])*float64(h)+modelPrt.bias[1]))
+			fmt.Printf(ss, h, t, sigmoid(float64(t)*((*modelPrt.Values)[0][1])+((*modelPrt.Values)[1][1])*float64(h)+(*modelPrt.Values)[2][1]))
 		}
 	}
 	fmt.Print(s)
 	for h := 0; h < 2; h++ {
 		for t := 0; t < 2; t++ {
-			fmt.Printf(ss, h, t, sigmoid(float64(t)*(modelPrt.weight[2])+(modelPrt.weight2[2])*float64(h)+modelPrt.bias[2]))
+			fmt.Printf(ss, h, t, sigmoid(float64(t)*((*modelPrt.Values)[0][2])+((*modelPrt.Values)[2][1])*float64(h)+(*modelPrt.Values)[2][2]))
 		}
 	}
 	fmt.Print(s)
 	for h := 0; h < 2; h++ {
 		for t := 0; t < 2; t++ {
-			a = sigmoid(float64(t)*(modelPrt.weight[2]) + (modelPrt.weight2[2])*float64(h) + modelPrt.bias[2])
-			b = sigmoid(float64(t)*(modelPrt.weight[1]) + (modelPrt.weight2[1])*float64(h) + modelPrt.bias[1])
+			a = sigmoid(float64(t)*((*modelPrt.Values)[0][2]) + ((*modelPrt.Values)[1][2])*float64(h) + (*modelPrt.Values)[2][2])
+			b = sigmoid(float64(t)*((*modelPrt.Values)[0][1]) + ((*modelPrt.Values)[1][1])*float64(h) + (*modelPrt.Values)[1][2])
 
-			fmt.Printf(ss, h, t, sigmoid(a*(modelPrt.weight[0])+(modelPrt.weight2[0])*b+modelPrt.bias[0]))
+			fmt.Printf(ss, h, t, sigmoid(a*((*modelPrt.Values)[0][0])+((*modelPrt.Values)[0][1])*b+(*modelPrt.Values)[0][2]))
 		}
 	}
 	fmt.Print(s)
