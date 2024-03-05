@@ -1,51 +1,46 @@
 package main
 
 import (
-	"fmt"
 	"math"
-	"math/rand"
-	"time"
 
 	matrix "./libraries/Matrix"
+	//gates "./data/gates"
 	//"slices"
 )
 
-var rate float64 = 0.1
-var eps float64 = 0.1
-var numberOfLoops int = 1000000
-
-type simpleModel struct {
-	weight, weight2, bias [3]float64
+type SimpleModel struct {
+	a0         matrix.SimpleMatrix
+	w1, b1, a1 matrix.SimpleMatrix
+	w2, b2, a2 matrix.SimpleMatrix
 }
 
-var training_XOR = [][]float64{
-	{0, 0, 0},
-	{1, 0, 1},
-	{0, 1, 1},
-	{1, 1, 0},
+func forward_xor(xor SimpleModel) {
+	matrix.Mult(xor.a1, xor.a0, xor.w1)
+	matrix.Sum(xor.a1, xor.b1)
+	matrix.ApplyFunction(xor.a1, sigmoid)
+
+	matrix.Mult(xor.a2, xor.a1, xor.w2)
+	matrix.Sum(xor.a2, xor.b2)
+	matrix.ApplyFunction(xor.a2, sigmoid)
 }
 
-var training_NAND = [][]float64{
-	{0, 0, 1},
-	{1, 0, 1},
-	{0, 1, 1},
-	{1, 1, 0},
+func cost(m SimpleModel, input matrix.SimpleMatrix, output matrix.SimpleMatrix) float64 {
+	var c, d float64
+
+	for i := 0; i < input.Row; i++ {
+		matrix.Copy(m.a0, *matrix.TakeRow(input, i))
+		y := *matrix.TakeRow(output, i)
+		forward_xor(m)
+
+		for t := 0; t < output.Col; t++ {
+			c = (*m.a2.Values)[0][t] - (*y.Values)[0][t]
+			c += d * d
+		}
+	}
+	return c / float64(input.Row)
 }
 
-var training_OR = [][]float64{
-	{0, 0, 0},
-	{1, 0, 1},
-	{0, 1, 1},
-	{1, 1, 1},
-}
-
-var training_AND = [][]float64{
-	{0, 0, 0},
-	{1, 0, 0},
-	{0, 1, 0},
-	{1, 1, 1},
-}
-
+/*
 func simple_cost(parTrainingset *[][]float64, weight float64, bias float64) float64 {
 	var result float64 = 0
 	var x1, y, d float64
@@ -82,17 +77,18 @@ func simple_cost_Model(simpleModel *simpleModel, parTrainingset *[][]float64) fl
 		result += d * d
 	}
 	return (result / float64(len(*parTrainingset)))
-}
+}*/
 
 func sigmoid(parInputFloat float64) float64 {
 	return float64(1) / (float64(1) + math.Exp(-parInputFloat))
 }
 
+/*
 func forward(parModel *simpleModel, x1 float64, x2 float64) float64 {
 	var a = sigmoid(x1*(parModel.weight[0]) + (parModel.weight2[0])*x2 + parModel.bias[0])
 	var b = sigmoid(x1*(parModel.weight[1]) + (parModel.weight2[1])*x2 + parModel.bias[1])
 	return sigmoid(a*(parModel.weight[2]) + (parModel.weight2[2])*b + parModel.bias[2])
-}
+}*
 
 func finite_diff(parModel *simpleModel) *simpleModel {
 	var c float64 = simple_cost_Model(parModel, &training_XOR)
@@ -131,7 +127,7 @@ func train(parTrainingset *[][3]float64, weight1 *float64, weight2 *float64, bia
 		*bias -= dB * rate
 	}
 
-}*/
+}
 
 func trainMat(parTrainingset matrix.SimpleMatrix, weight1 *float64, weight2 *float64, bias *float64) {
 	for i := 0; i < numberOfLoops; i++ {
@@ -174,63 +170,31 @@ func newRandModel() *simpleModel {
 	return modelPtr
 
 }
+*/
 
 func main() {
-
-	var a, b float64
-	s := "----------------------------------------\n"
-	ss := "%d | %d ---> %g\n"
-
-	modelPrt := matrix.NewRandMatrix(3, 3)
-
-	//var currOperation *[][3]float64
-	//currOperation = &training_NAND
 	/*
-		train(&training_AND, &modelPrt.weight[0], &modelPrt.weight2[0], &modelPrt.bias[0])
-		train(&training_NAND, &modelPrt.weight[1], &modelPrt.weight2[1], &modelPrt.bias[1])
-		train(&training_OR, &modelPrt.weight[2], &modelPrt.weight2[2], &modelPrt.bias[2])
+		var a, b float64
+		s := "----------------------------------------\n"
+		ss := "%d | %d ---> %g\n"
 	*/
+	//var y0 float64
+	var xorModel SimpleModel
+	xorModel.a0 = (*matrix.NewMemMatrix(1, 2))
+	xorModel.w1 = (*matrix.NewRandMatrix(2, 2))
+	xorModel.b1 = (*matrix.NewRandMatrix(1, 2))
+	xorModel.a1 = (*matrix.NewMemMatrix(1, 2))
+	xorModel.w2 = (*matrix.NewRandMatrix(2, 1))
+	xorModel.b2 = (*matrix.NewRandMatrix(1, 1))
+	xorModel.a2 = (*matrix.NewMemMatrix(1, 1))
 
-	orMatrix := matrix.NewMatrix(training_OR)
-	andMatrix := matrix.NewMatrix(training_AND)
-	nandMatrix := matrix.NewMatrix(training_NAND)
+	for i := 0; i < 2; i++ {
 
-	trainMat(*andMatrix, &(*modelPrt.Values)[0][0], &(*modelPrt.Values)[1][0], &(*modelPrt.Values)[2][0])
-	trainMat(*nandMatrix, &(*modelPrt.Values)[0][1], &(*modelPrt.Values)[1][1], &(*modelPrt.Values)[2][1])
-	trainMat(*orMatrix, &(*modelPrt.Values)[0][2], &(*modelPrt.Values)[1][2], &(*modelPrt.Values)[2][2])
-
-	for h := 0; h < 2; h++ {
-		for t := 0; t < 2; t++ {
-			fmt.Printf(ss, h, t, sigmoid(float64(t)*((*modelPrt.Values)[0][0])+((*modelPrt.Values)[1][0])*float64(h)+(*modelPrt.Values)[2][0]))
-		}
-	}
-	fmt.Print(s)
-	for h := 0; h < 2; h++ {
-		for t := 0; t < 2; t++ {
-			fmt.Printf(ss, h, t, sigmoid(float64(t)*((*modelPrt.Values)[0][1])+((*modelPrt.Values)[1][1])*float64(h)+(*modelPrt.Values)[2][1]))
-		}
-	}
-	fmt.Print(s)
-	for h := 0; h < 2; h++ {
-		for t := 0; t < 2; t++ {
-			fmt.Printf(ss, h, t, sigmoid(float64(t)*((*modelPrt.Values)[0][2])+((*modelPrt.Values)[2][1])*float64(h)+(*modelPrt.Values)[2][2]))
-		}
-	}
-	fmt.Print(s)
-	for h := 0; h < 2; h++ {
-		for t := 0; t < 2; t++ {
-			a = sigmoid(float64(t)*((*modelPrt.Values)[0][2]) + ((*modelPrt.Values)[1][2])*float64(h) + (*modelPrt.Values)[2][2])
-			b = sigmoid(float64(t)*((*modelPrt.Values)[0][1]) + ((*modelPrt.Values)[1][1])*float64(h) + (*modelPrt.Values)[1][2])
-
-			fmt.Printf(ss, h, t, sigmoid(a*((*modelPrt.Values)[0][0])+((*modelPrt.Values)[0][1])*b+(*modelPrt.Values)[0][2]))
-		}
-	}
-	fmt.Print(s)
-	modelPrt2 := newRandModel()
-	modelPrt2 = trainModel(modelPrt2)
-	for h := 0; h < 2; h++ {
-		for t := 0; t < 2; t++ {
-			fmt.Printf(ss, h, t, forward(modelPrt2, float64(t), float64(h)))
+		for j := 0; j < 2; j++ {
+			(*xorModel.a0.Values)[0][0] = float64(i)
+			(*xorModel.a0.Values)[0][1] = float64(j)
+			forward_xor(xorModel)
+			//y0 = (*xorModel.a2.Values)[0][0]
 		}
 	}
 

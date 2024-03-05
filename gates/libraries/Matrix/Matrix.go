@@ -1,8 +1,9 @@
 package matrix
 
 import (
+	"fmt"
 	"math/rand"
-	"time"
+	//"time"
 )
 
 //"math"
@@ -22,15 +23,15 @@ var bb = [][]float64{
 */
 type SimpleMatrix struct {
 	Values *[][]float64
-	col    int
-	row    int
+	Col    int
+	Row    int
 }
 
 func NewMatrix(parValues [][]float64) *SimpleMatrix {
 	return &SimpleMatrix{
 		Values: &parValues,
-		row:    len(parValues),
-		col:    len(parValues[0]),
+		Row:    len(parValues),
+		Col:    len(parValues[0]),
 	}
 }
 
@@ -40,50 +41,84 @@ func NewRandMatrix(parRows int, parColumns int) *SimpleMatrix {
 		resultVal[i] = make([]float64, parColumns)
 
 		for j := 0; j < parColumns; j++ {
-			r := rand.New(rand.NewSource(time.Now().UnixNano()))
-			resultVal[i][j] = r.Float64()
-			resultVal[i][j] = r.Float64()
-			resultVal[i][j] = r.Float64()
+			//r := rand.New(rand.NewSource(time.Now().UnixNano()))
+			resultVal[i][j] = rand.Float64()
 		}
 	}
 	return &SimpleMatrix{
 		Values: &resultVal,
-		row:    parRows,
-		col:    parColumns,
+		Row:    parRows,
+		Col:    parColumns,
 	}
 }
 
-func sum(a SimpleMatrix, b SimpleMatrix) *SimpleMatrix {
+func NewMemMatrix(parRows int, parColumns int) *SimpleMatrix {
+	resultVal := make([][]float64, parRows)
+	for i := 0; i < parRows; i++ {
+		resultVal[i] = make([]float64, parColumns)
+	}
+	return &SimpleMatrix{
+		Values: &resultVal,
+		Row:    parRows,
+		Col:    parColumns,
+	}
+}
 
-	result := &SimpleMatrix{}
-	resultVal := make([][]float64, a.row)
-	for i := 0; i < a.col; i++ {
-		resultVal[i] = make([]float64, a.col)
-		for j := 0; j < a.row; j++ {
-			resultVal[i][j] += (*a.Values)[i][j] + (*b.Values)[i][j]
+func Sum(result SimpleMatrix, b SimpleMatrix) {
+	for i := 0; i < result.Row; i++ {
+		for j := 0; j < result.Col; j++ {
+			(*result.Values)[i][j] += (*b.Values)[i][j]
 		}
 	}
-	result.Values = &resultVal
-	return result
 }
 
-func mult(a SimpleMatrix, b SimpleMatrix) *SimpleMatrix {
+func Mult(result SimpleMatrix, a SimpleMatrix, b SimpleMatrix) {
 
-	result := &SimpleMatrix{}
-	resultVal := make([][]float64, a.row)
-	for i := 0; i < a.row; i++ {
-
-		resultVal[i] = make([]float64, b.col)
-
-		for j := 0; j < b.col; j++ {
-
-			for k := 0; k < a.col; k++ {
-				resultVal[i][j] += (*a.Values)[i][k] * (*b.Values)[k][j]
+	for i := 0; i < a.Row; i++ {
+		for j := 0; j < b.Col; j++ {
+			for k := 0; k < a.Col; k++ {
+				(*result.Values)[i][j] += (*a.Values)[i][k] * (*b.Values)[k][j]
 			}
 		}
 	}
-	result.Values = &resultVal
+}
+
+func ApplyFunction(result SimpleMatrix, toApply func(par float64) float64) {
+	for i := 0; i < result.Row; i++ {
+		for j := 0; j < result.Col; j++ {
+			(*result.Values)[i][j] = toApply((*result.Values)[i][j])
+		}
+	}
+}
+
+func Print(a SimpleMatrix) {
+	fmt.Println("[")
+	ss := "%g    "
+	for i := 0; i < a.Row; i++ {
+		for j := 0; j < a.Col; j++ {
+			fmt.Printf(ss, (*a.Values)[i][j])
+		}
+		fmt.Print("\n")
+	}
+	fmt.Print("]")
+
+}
+
+func TakeRow(a SimpleMatrix, parRow int) *SimpleMatrix {
+	result := NewMemMatrix(1, a.Col)
+	for j := 0; j < a.Col; j++ {
+		(*result.Values)[0][j] = (*a.Values)[parRow][j]
+	}
 	return result
+}
+
+func Copy(a SimpleMatrix, b SimpleMatrix) {
+
+	for i := 0; i < a.Row; i++ {
+		for j := 0; j < a.Col; j++ {
+			(*a.Values)[i][j] = (*b.Values)[i][j]
+		}
+	}
 }
 
 /*
