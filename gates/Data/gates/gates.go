@@ -1,8 +1,8 @@
 package gates
 
-var rate float64 = 0.1
-var eps float64 = 0.1
-var numberOfLoops int = 1000000
+var Rate float64 = 0.1
+var Eps float64 = 0.1
+var NumberOfLoops int = 10000
 
 var Training_XOR = [][]float64{
 	{0, 0, 0},

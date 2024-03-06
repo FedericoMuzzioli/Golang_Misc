@@ -25,6 +25,7 @@ type SimpleMatrix struct {
 	Values *[][]float64
 	Col    int
 	Row    int
+	stride int
 }
 
 func NewMatrix(parValues [][]float64) *SimpleMatrix {
@@ -49,10 +50,11 @@ func NewRandMatrix(parRows int, parColumns int) *SimpleMatrix {
 		Values: &resultVal,
 		Row:    parRows,
 		Col:    parColumns,
+		stride: parColumns,
 	}
 }
 
-func NewMemMatrix(parRows int, parColumns int) *SimpleMatrix {
+func NewMemMatrix(parRows int, parColumns int, stride int) *SimpleMatrix {
 	resultVal := make([][]float64, parRows)
 	for i := 0; i < parRows; i++ {
 		resultVal[i] = make([]float64, parColumns)
@@ -61,6 +63,7 @@ func NewMemMatrix(parRows int, parColumns int) *SimpleMatrix {
 		Values: &resultVal,
 		Row:    parRows,
 		Col:    parColumns,
+		stride: stride,
 	}
 }
 
@@ -76,6 +79,7 @@ func Mult(result SimpleMatrix, a SimpleMatrix, b SimpleMatrix) {
 
 	for i := 0; i < a.Row; i++ {
 		for j := 0; j < b.Col; j++ {
+			(*result.Values)[i][j] = 0
 			for k := 0; k < a.Col; k++ {
 				(*result.Values)[i][j] += (*a.Values)[i][k] * (*b.Values)[k][j]
 			}
@@ -105,9 +109,17 @@ func Print(a SimpleMatrix) {
 }
 
 func TakeRow(a SimpleMatrix, parRow int) *SimpleMatrix {
-	result := NewMemMatrix(1, a.Col)
+	result := NewMemMatrix(1, a.Col, a.stride)
 	for j := 0; j < a.Col; j++ {
 		(*result.Values)[0][j] = (*a.Values)[parRow][j]
+	}
+	return result
+}
+
+func TakeColumn(a SimpleMatrix, parColumn int) *SimpleMatrix {
+	result := NewMemMatrix(a.Row, 1, a.stride)
+	for j := 0; j < a.Row; j++ {
+		(*result.Values)[j][0] = (*a.Values)[j][parColumn]
 	}
 	return result
 }
