@@ -15,6 +15,32 @@ type SimpleModel struct {
 	w2, b2, a2 matrix.SimpleMatrix
 }
 
+type ActualModel struct {
+	count   int
+	weights []matrix.SimpleMatrix
+	biases  []matrix.SimpleMatrix
+	active  []matrix.SimpleMatrix
+}
+
+func createNNModel(parSruct []int, parCount int) ActualModel {
+	var newModel ActualModel
+	newModel.count = parCount - 1 /*
+		newModel.weights = make([]matrix.SimpleMatrix, newModel.count )
+		newModel.biases = make([]matrix.SimpleMatrix, newModel.count )
+		newModel.active = make([]matrix.SimpleMatrix, parCount)
+	*/
+
+	newModel.active = append(newModel.active, *matrix.NewMemMatrix(1, parSruct[0]))
+	for i := 1; i < parCount; i++ {
+		newModel.weights = append(newModel.weights, *matrix.NewMemMatrix(newModel.active[i-1].Col, parSruct[i]))
+		newModel.biases = append(newModel.biases, *matrix.NewMemMatrix(1, parSruct[i]))
+		newModel.active = append(newModel.active, *matrix.NewMemMatrix(1, parSruct[i+1]))
+
+	}
+
+	return newModel
+}
+
 func createModel() SimpleModel {
 	var xorModel SimpleModel
 	xorModel.a0 = (*matrix.NewMemMatrix(1, 2, 2))
